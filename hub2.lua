@@ -1,4 +1,6 @@
-================================================================
+
+
+-- ================================================================
 --  FANTASMA1L HUB — BROOKHAVEN EDITION (v8.8.0) — integrado v53
 --  Roda em task.spawn paralelo ao painel admin (WindUI).
 -- ================================================================
@@ -13,7 +15,7 @@ local HttpService        = game:GetService("HttpService")
 local LocalPlayer        = Players.LocalPlayer
 
 local ICON_ID            = "rbxassetid://72455921762458"
-local WEBHOOK_URL        = "https://discord.com/api/webhooks/1561501648298188801/1seLFNFBSSjoOt9qZc2vs_gfirlf6pkvUjDkzsFYW7ozCVUGloPd9Jq1mXcUqDkajWbY"
+local WEBHOOK_URL        = "COLE_SEU_NOVO_WEBHOOK_AQUI"
 local DISCORD_INVITE     = "https://discord.gg/bXuvVw76B"
 
 -- helper ausente no script original do BH
