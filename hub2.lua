@@ -15,7 +15,7 @@ local HttpService        = game:GetService("HttpService")
 local LocalPlayer        = Players.LocalPlayer
 
 local ICON_ID            = "rbxassetid://72455921762458"
-local WEBHOOK_URL        = "COLE_SEU_NOVO_WEBHOOK_AQUI"
+local WEBHOOK_URL        = "https://discord.com/api/webhooks/1561501648298188801/1seLFNFBSSjoOt9qZc2vs_gfirlf6pkvUjDkzsFYW7ozCVUGloPd9Jq1mXcUqDkajWbY"
 local DISCORD_INVITE     = "https://discord.gg/bXuvVw76B"
 
 -- helper ausente no script original do BH
