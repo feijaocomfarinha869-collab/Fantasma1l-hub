@@ -1,6 +1,6 @@
 -- ==========================================================
--- FANTASMA1L HUB - BROOKHAVEN EDITION (v9.0)
--- Loading Screen premium (img 123768547601841) · Fling por Metodo
+-- FANTASMA1L HUB - BROOKHAVEN EDITION (v9.1)
+-- Loading Screen premium · Sem emojis na UI · Webhook bonito
 -- ==========================================================
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,10 +14,37 @@ local LocalPlayer       = Players.LocalPlayer
 local ICON_ID     = "rbxassetid://72455921762458"
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1561501648298188801/1seLFNFBSSjoOt9qZc2vs_gfirlf6pkvUjDkzsFYW7ozCVUGloPd9Jq1mXcUqDkajWbY"
 local DISCORD_URL = "https://discord.gg/bXuvVw76B"
-local BG_ID       = "rbxassetid://123768547601841"
+local BG_NUM      = "123768547601841"
+local BG_ID       = "rbxassetid://" .. BG_NUM
 
 local function findPlayer(name)
     return Players:FindFirstChild(tostring(name or ""))
+end
+
+-- converte ID de Decal em textura real (sem isso a imagem nao aparece)
+local imgCache = {}
+local function resolveImage(id)
+    local clean = tostring(id or ""):match("%d+")
+    if not clean then return "" end
+    if imgCache[clean] then return imgCache[clean] end
+    local result = "rbxassetid://" .. clean
+    pcall(function()
+        local objs = game:GetObjects("rbxassetid://" .. clean)
+        local o = objs and objs[1]
+        if o then
+            local tex
+            if o:IsA("Decal") or o:IsA("Texture") then tex = o.Texture
+            elseif o:IsA("ImageLabel") or o:IsA("ImageButton") then tex = o.Image
+            else
+                local d = o:FindFirstChildWhichIsA("Decal", true) or o:FindFirstChildWhichIsA("Texture", true)
+                if d then tex = d.Texture end
+            end
+            if tex and tex ~= "" then result = tex end
+            pcall(function() o:Destroy() end)
+        end
+    end)
+    imgCache[clean] = result
+    return result
 end
 
 -- ── cargo ─────────────────────────────────────────────────────
@@ -136,7 +163,7 @@ local function sendWebhook()
                         { name = "User ID",    value = "`"..LocalPlayer.UserId.."`", inline = true },
                         { name = "Cargo",      value = badge, inline = false },
                         { name = "Executor",   value = "`"..exName.."`", inline = true },
-                        { name = "Hub",        value = "`Fantasma1l Hub · BH v9.0`", inline = true },
+                        { name = "Hub",        value = "`Fantasma1l Hub · BH v9.1`", inline = true },
                         { name = "Painel Admin", value = IS_ADMIN and "Ativo — "..DETECT_REASON or "Nao detectado", inline = false },
                         { name = "Place ID",   value = "`"..game.PlaceId.."`", inline = true },
                         { name = "Server Job", value = "`"..tostring(game.JobId):sub(1,24).."...`", inline = true },
@@ -144,7 +171,7 @@ local function sendWebhook()
                           value = "[Entrar no Servidor]("..joinLink..")  ·  [Discord]("..DISCORD_URL..")", inline = false },
                     },
                     footer = {
-                        text     = "Fantasma1l Hub · BH v9.0  |  "..os.date("!%d/%m/%Y %H:%M UTC"),
+                        text     = "Fantasma1l Hub · BH v9.1  |  "..os.date("!%d/%m/%Y %H:%M UTC"),
                         icon_url = "https://www.roblox.com/headshot-thumbnail/image?userId="..LocalPlayer.UserId.."&width=48&height=48&format=png"
                     },
                     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -165,7 +192,7 @@ sendWebhook()
 notify(HUB_NAME, IS_ADMIN and (MY_ROLE .. " — Bem-vindo!") or "Carregando Brookhaven Edition...", 4)
 
 -- ═══════════════════════════════════════════════════════════
---  TELA DE CARREGAMENTO PREMIUM (fundo 123768547601841)
+--  TELA DE CARREGAMENTO (cria antes do Redz)
 -- ═══════════════════════════════════════════════════════════
 local function createLoadingScreen()
     local pg = LocalPlayer:WaitForChild("PlayerGui", 10)
@@ -181,167 +208,65 @@ local function createLoadingScreen()
     sg.DisplayOrder = 1000
     sg.Parent = pg
 
-    -- fundo escuro profundo
+    -- fundo escuro
     local bg = Instance.new("Frame")
     bg.Size = UDim2.fromScale(1, 1)
-    bg.BackgroundColor3 = Color3.fromRGB(2, 1, 8)
+    bg.BackgroundColor3 = Color3.fromRGB(3, 1, 10)
     bg.BorderSizePixel = 0
     bg.Parent = sg
 
-    -- ── IMAGEM DE FUNDO (zoom lento cinematografico) ──────────
+    -- imagem de fundo
     local bgImg = Instance.new("ImageLabel")
     bgImg.Size = UDim2.fromScale(1, 1)
     bgImg.BackgroundTransparency = 1
-    bgImg.Image = BG_ID
+    -- miniatura do asset aparece na hora; a textura real troca assim que resolver
+    bgImg.Image = "rbxthumb://type=Asset&id=" .. BG_NUM .. "&w=768&h=432"
+    task.spawn(function()
+        local real = resolveImage(BG_ID)
+        if bgImg.Parent and real ~= "" and real ~= BG_ID then bgImg.Image = real end
+    end)
     bgImg.ScaleType = Enum.ScaleType.Crop
-    bgImg.ImageTransparency = 0.12
+    bgImg.ImageTransparency = 0.1
     bgImg.Parent = bg
 
-    -- respiracao (zoom in/out lento)
-    task.spawn(function()
-        while sg and sg.Parent do
-            TweenService:Create(bgImg,
-                TweenInfo.new(9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                { Size = UDim2.fromScale(1.09, 1.09) }):Play()
-            task.wait(9)
-            if not (sg and sg.Parent) then break end
-            TweenService:Create(bgImg,
-                TweenInfo.new(9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                { Size = UDim2.fromScale(1, 1) }):Play()
-            task.wait(9)
-        end
-    end)
-
-    -- overlay de cor roxo/azul bem sutil por cima da imagem
-    local tint = Instance.new("Frame")
-    tint.Size = UDim2.fromScale(1, 1)
-    tint.BackgroundColor3 = Color3.new(1, 1, 1)
-    tint.BackgroundTransparency = 1
-    tint.BorderSizePixel = 0
-    tint.Parent = bg
-    local tintG = Instance.new("UIGradient", tint)
-    tintG.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0,   Color3.fromRGB(88, 28, 135)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(15, 10, 40)),
-        ColorSequenceKeypoint.new(1,   Color3.fromRGB(30, 58, 138)),
+    -- overlay escuro suave
+    local overlay = Instance.new("Frame")
+    overlay.Size = UDim2.fromScale(1, 1)
+    overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    overlay.BackgroundTransparency = 0.3
+    overlay.BorderSizePixel = 0
+    overlay.Parent = bg
+    local ovG = Instance.new("UIGradient", overlay)
+    ovG.Rotation = 90
+    ovG.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.3, 0.72),
+        NumberSequenceKeypoint.new(0.7, 0.72),
+        NumberSequenceKeypoint.new(1, 0),
     })
-    tintG.Transparency = NumberSequence.new(0.55)
-    tintG.Rotation = 35
-
-    -- vinheta escura nas bordas
-    local function vin(rot)
-        local f = Instance.new("Frame")
-        f.Size = UDim2.fromScale(1, 1)
-        f.BackgroundColor3 = Color3.new(0, 0, 0)
-        f.BorderSizePixel = 0
-        f.Parent = bg
-        local g = Instance.new("UIGradient", f)
-        g.Rotation = rot
-        g.Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0,    0),
-            NumberSequenceKeypoint.new(0.28, 0.85),
-            NumberSequenceKeypoint.new(0.72, 0.85),
-            NumberSequenceKeypoint.new(1,    0),
-        })
-        return f
-    end
-    vin(90)
-
-    -- ── PARTÍCULAS FLUTUANTES (faiscas roxas/azuis) ───────────
-    task.spawn(function()
-        while sg and sg.Parent do
-            local p = Instance.new("ImageLabel")
-            p.Size = UDim2.fromOffset(math.random(3, 7), math.random(3, 7))
-            p.Position = UDim2.new(math.random(), 0, 1.05, 0)
-            p.BackgroundTransparency = 1
-            p.Image = "rbxassetid://6947150721"
-            p.ImageColor3 = math.random() < 0.5
-                and Color3.fromRGB(168, 85, 247)
-                or  Color3.fromRGB(96, 165, 250)
-            p.ImageTransparency = math.random(30, 60) / 100
-            p.ZIndex = 2
-            p.Parent = bg
-            local dur = math.random(60, 140) / 10
-            local tw = TweenService:Create(p,
-                TweenInfo.new(dur, Enum.EasingStyle.Linear),
-                {
-                    Position = UDim2.new(p.Position.X.Scale + (math.random(-10, 10) / 100), 0, -0.08, 0),
-                    ImageTransparency = 1,
-                    Rotation = math.random(-90, 90),
-                })
-            tw:Play()
-            tw.Completed:Connect(function() p:Destroy() end)
-            task.wait(math.random(8, 22) / 20)
-        end
-    end)
-
-    -- ── GLOW ATRÁS DO CARD ────────────────────────────────────
-    local glow = Instance.new("Frame")
-    glow.Size = UDim2.fromOffset(620, 520)
-    glow.AnchorPoint = Vector2.new(0.5, 0.5)
-    glow.Position = UDim2.fromScale(0.5, 0.5)
-    glow.BackgroundColor3 = Color3.fromRGB(120, 60, 220)
-    glow.BackgroundTransparency = 0.82
-    glow.BorderSizePixel = 0
-    glow.ZIndex = 0
-    glow.Parent = bg
-    Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
-    local glowG = Instance.new("UIGradient", glow)
-    glowG.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(168, 85, 247)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(59, 130, 246)),
-    })
-    glowG.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.75),
-        NumberSequenceKeypoint.new(1, 1),
-    })
-    task.spawn(function()
-        local r = 0
-        while sg and sg.Parent do
-            r = (r + 0.4) % 360
-            glowG.Rotation = r
-            task.wait(0.05)
-        end
-    end)
 
     -- ── CARD CENTRAL ───────────────────────────────────────────
     local card = Instance.new("Frame")
     card.Size = UDim2.fromOffset(460, 448)
     card.AnchorPoint = Vector2.new(0.5, 0.5)
     card.Position = UDim2.fromScale(0.5, 0.5)
-    card.BackgroundColor3 = Color3.fromRGB(8, 5, 20)
-    card.BackgroundTransparency = 0.08
+    card.BackgroundColor3 = Color3.fromRGB(6, 3, 18)
+    card.BackgroundTransparency = 0.1
     card.BorderSizePixel = 0
-    card.ZIndex = 5
     card.Parent = bg
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 22)
 
-    -- sombra do card
-    local cardShadow = Instance.new("ImageLabel")
-    cardShadow.Size = UDim2.new(1, 70, 1, 70)
-    cardShadow.Position = UDim2.fromScale(0.5, 0.5)
-    cardShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    cardShadow.BackgroundTransparency = 1
-    cardShadow.Image = "rbxassetid://6014261993"
-    cardShadow.ImageColor3 = Color3.new(0, 0, 0)
-    cardShadow.ImageTransparency = 0.35
-    cardShadow.ScaleType = Enum.ScaleType.Slice
-    cardShadow.SliceCenter = Rect.new(49, 49, 450, 450)
-    cardShadow.ZIndex = 4
-    cardShadow.Parent = bg
-
-    -- borda animada do card (roxo -> azul)
+    -- borda animada do card
     local cStroke = Instance.new("UIStroke", card)
     cStroke.Color = Color3.fromRGB(100, 40, 200)
     cStroke.Thickness = 1.8
     cStroke.Transparency = 0.08
-    cStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     local cSGrad = Instance.new("UIGradient", cStroke)
     cSGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0,    Color3.fromRGB(168, 85, 247)),
-        ColorSequenceKeypoint.new(0.35, Color3.fromRGB(120, 60, 250)),
-        ColorSequenceKeypoint.new(0.65, Color3.fromRGB(80, 140, 255)),
-        ColorSequenceKeypoint.new(1,    Color3.fromRGB(59, 130, 246)),
+        ColorSequenceKeypoint.new(0,    Color3.fromRGB(80,  30, 180)),
+        ColorSequenceKeypoint.new(0.3,  Color3.fromRGB(180, 80, 255)),
+        ColorSequenceKeypoint.new(0.65, Color3.fromRGB(80, 160, 255)),
+        ColorSequenceKeypoint.new(1,    Color3.fromRGB(80,  30, 180)),
     })
 
     -- linha de topo (brilho roxo)
@@ -351,7 +276,6 @@ local function createLoadingScreen()
     topLine.Position = UDim2.new(0.5, 0, 0, 0)
     topLine.BackgroundColor3 = Color3.fromRGB(160, 70, 255)
     topLine.BorderSizePixel = 0
-    topLine.ZIndex = 6
     topLine.Parent = card
     Instance.new("UICorner", topLine).CornerRadius = UDim.new(1, 0)
     local tlG = Instance.new("UIGradient", topLine)
@@ -372,7 +296,6 @@ local function createLoadingScreen()
     titleLbl.TextSize = 28
     titleLbl.TextStrokeColor3 = Color3.fromRGB(100, 40, 200)
     titleLbl.TextStrokeTransparency = 0.3
-    titleLbl.ZIndex = 6
     titleLbl.Parent = card
 
     local titleGrad = Instance.new("UIGradient", titleLbl)
@@ -381,16 +304,16 @@ local function createLoadingScreen()
         ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 190, 255)),
         ColorSequenceKeypoint.new(1,   Color3.new(1, 1, 1)),
     })
+    titleGrad.Rotation = 0
 
     local edLbl = Instance.new("TextLabel")
     edLbl.Size = UDim2.new(1, 0, 0, 20)
     edLbl.Position = UDim2.new(0, 0, 0, 55)
     edLbl.BackgroundTransparency = 1
-    edLbl.Text = "BROOKHAVEN EDITION  ·  v9.0"
+    edLbl.Text = "BROOKHAVEN EDITION  ·  v9.1"
     edLbl.TextColor3 = Color3.fromRGB(150, 80, 240)
     edLbl.Font = Enum.Font.Gotham
     edLbl.TextSize = 13
-    edLbl.ZIndex = 6
     edLbl.Parent = card
 
     -- separador
@@ -400,48 +323,47 @@ local function createLoadingScreen()
     sep.Position = UDim2.new(0.5, 0, 0, 83)
     sep.BackgroundColor3 = Color3.fromRGB(55, 28, 100)
     sep.BorderSizePixel = 0
-    sep.ZIndex = 6
     sep.Parent = card
 
     -- ── AVATAR ─────────────────────────────────────────────────
+    -- anel externo animado
     local ringFrame = Instance.new("Frame")
     ringFrame.Size = UDim2.fromOffset(130, 130)
     ringFrame.AnchorPoint = Vector2.new(0.5, 0)
     ringFrame.Position = UDim2.new(0.5, 0, 0, 98)
     ringFrame.BackgroundTransparency = 1
     ringFrame.BorderSizePixel = 0
-    ringFrame.ZIndex = 6
     ringFrame.Parent = card
     Instance.new("UICorner", ringFrame).CornerRadius = UDim.new(1, 0)
     local rStroke = Instance.new("UIStroke", ringFrame)
     rStroke.Color = Color3.fromRGB(160, 70, 255)
     rStroke.Thickness = 3
-    rStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     local rGrad = Instance.new("UIGradient", rStroke)
     rGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0,    Color3.fromRGB(168, 85, 247)),
-        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(120, 60, 250)),
-        ColorSequenceKeypoint.new(0.66, Color3.fromRGB(80, 140, 255)),
-        ColorSequenceKeypoint.new(1,    Color3.fromRGB(59, 130, 246)),
+        ColorSequenceKeypoint.new(0,    Color3.fromRGB(255, 150, 255)),
+        ColorSequenceKeypoint.new(0.28, Color3.fromRGB(80,  40,  220)),
+        ColorSequenceKeypoint.new(0.56, Color3.fromRGB(80, 180,  255)),
+        ColorSequenceKeypoint.new(0.78, Color3.fromRGB(80,  40,  220)),
+        ColorSequenceKeypoint.new(1,    Color3.fromRGB(255, 150, 255)),
     })
 
+    -- fundo do avatar
     local avBg = Instance.new("Frame")
     avBg.Size = UDim2.fromOffset(116, 116)
     avBg.AnchorPoint = Vector2.new(0.5, 0.5)
     avBg.Position = UDim2.fromScale(0.5, 0.5)
     avBg.BackgroundColor3 = Color3.fromRGB(14, 7, 32)
     avBg.BorderSizePixel = 0
-    avBg.ZIndex = 6
     avBg.Parent = ringFrame
     Instance.new("UICorner", avBg).CornerRadius = UDim.new(1, 0)
 
+    -- imagem do avatar
     local avImg = Instance.new("ImageLabel")
     avImg.Size = UDim2.fromOffset(108, 108)
     avImg.AnchorPoint = Vector2.new(0.5, 0.5)
     avImg.Position = UDim2.fromScale(0.5, 0.5)
     avImg.BackgroundTransparency = 1
     avImg.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=420&h=420"
-    avImg.ZIndex = 7
     avImg.Parent = avBg
     Instance.new("UICorner", avImg).CornerRadius = UDim.new(1, 0)
 
@@ -454,7 +376,6 @@ local function createLoadingScreen()
     plNameLbl.TextColor3 = Color3.new(1, 1, 1)
     plNameLbl.Font = Enum.Font.GothamBold
     plNameLbl.TextSize = 17
-    plNameLbl.ZIndex = 6
     plNameLbl.Parent = card
 
     local rC   = IS_ADMIN and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(80, 220, 110)
@@ -466,7 +387,6 @@ local function createLoadingScreen()
     badgeBg.BackgroundColor3 = Color3.fromRGB(10, 5, 28)
     badgeBg.BackgroundTransparency = 0.15
     badgeBg.BorderSizePixel = 0
-    badgeBg.ZIndex = 6
     badgeBg.Parent = card
     Instance.new("UICorner", badgeBg).CornerRadius = UDim.new(1, 0)
     local bStr = Instance.new("UIStroke", badgeBg)
@@ -478,9 +398,9 @@ local function createLoadingScreen()
     bTxt.TextColor3 = rC
     bTxt.Font = Enum.Font.GothamBold
     bTxt.TextSize = 13
-    bTxt.ZIndex = 7
     bTxt.Parent = badgeBg
 
+    -- indicador de jogo
     local gameLbl = Instance.new("TextLabel")
     gameLbl.Size = UDim2.new(1, 0, 0, 18)
     gameLbl.Position = UDim2.new(0, 0, 0, 298)
@@ -489,7 +409,6 @@ local function createLoadingScreen()
     gameLbl.TextColor3 = Color3.fromRGB(65, 185, 95)
     gameLbl.Font = Enum.Font.Gotham
     gameLbl.TextSize = 12
-    gameLbl.ZIndex = 6
     gameLbl.Parent = card
 
     -- ── BARRA DE PROGRESSO ─────────────────────────────────────
@@ -502,7 +421,6 @@ local function createLoadingScreen()
     loadMsg.Font = Enum.Font.Gotham
     loadMsg.TextSize = 12
     loadMsg.TextXAlignment = Enum.TextXAlignment.Left
-    loadMsg.ZIndex = 6
     loadMsg.Parent = card
 
     local pctLbl = Instance.new("TextLabel")
@@ -514,41 +432,40 @@ local function createLoadingScreen()
     pctLbl.Font = Enum.Font.GothamBlack
     pctLbl.TextSize = 14
     pctLbl.TextXAlignment = Enum.TextXAlignment.Right
-    pctLbl.ZIndex = 6
     pctLbl.Parent = card
 
+    -- trilha da barra
     local barBg = Instance.new("Frame")
     barBg.Size = UDim2.new(1, -40, 0, 8)
     barBg.Position = UDim2.new(0, 20, 0, 356)
     barBg.BackgroundColor3 = Color3.fromRGB(16, 9, 36)
     barBg.BorderSizePixel = 0
     barBg.ClipsDescendants = true
-    barBg.ZIndex = 6
     barBg.Parent = card
     Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
 
+    -- preenchimento
     local barFill = Instance.new("Frame")
     barFill.Size = UDim2.new(0.001, 0, 1, 0)
     barFill.BackgroundColor3 = Color3.fromRGB(140, 60, 240)
     barFill.BorderSizePixel = 0
     barFill.ClipsDescendants = true
-    barFill.ZIndex = 7
     barFill.Parent = barBg
     Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
     local fGrad = Instance.new("UIGradient", barFill)
     fGrad.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0,   Color3.fromRGB(65,  22, 155)),
         ColorSequenceKeypoint.new(0.6, Color3.fromRGB(155, 65, 248)),
-        ColorSequenceKeypoint.new(1,   Color3.fromRGB(110, 160, 255)),
+        ColorSequenceKeypoint.new(1,   Color3.fromRGB(215, 158, 255)),
     })
 
+    -- shimmer na barra
     local shimmer = Instance.new("Frame")
     shimmer.Size = UDim2.new(0, 44, 1, 0)
     shimmer.Position = UDim2.new(-0.3, 0, 0, 0)
     shimmer.BackgroundColor3 = Color3.new(1, 1, 1)
     shimmer.BackgroundTransparency = 0.65
     shimmer.BorderSizePixel = 0
-    shimmer.ZIndex = 8
     shimmer.Parent = barFill
     Instance.new("UICorner", shimmer).CornerRadius = UDim.new(1, 0)
     local shG = Instance.new("UIGradient", shimmer)
@@ -558,26 +475,28 @@ local function createLoadingScreen()
         NumberSequenceKeypoint.new(1, 1),
     })
 
+    -- rodapé
     local footerLbl = Instance.new("TextLabel")
     footerLbl.Size = UDim2.new(1, 0, 0, 20)
     footerLbl.Position = UDim2.new(0, 0, 0, 420)
     footerLbl.BackgroundTransparency = 1
-    footerLbl.Text = "Fantasma1l Hub  ·  Brookhaven Edition  ·  v9.0"
-    footerLbl.TextColor3 = Color3.fromRGB(60, 42, 95)
+    footerLbl.Text = "Fantasma1l Hub  ·  Brookhaven Edition  ·  v9.1"
+    footerLbl.TextColor3 = Color3.fromRGB(48, 32, 78)
     footerLbl.Font = Enum.Font.Gotham
     footerLbl.TextSize = 11
-    footerLbl.ZIndex = 6
     footerLbl.Parent = card
 
     -- ── ANIMAÇÕES ──────────────────────────────────────────────
+    -- anel girando
     task.spawn(function()
         local deg = 0
         while sg and sg.Parent do
-            deg = (deg + 2.4) % 360
+            deg = (deg + 2) % 360
             rGrad.Rotation = deg
             task.wait(0.03)
         end
     end)
+    -- borda do card girando mais devagar
     task.spawn(function()
         local deg = 0
         while sg and sg.Parent do
@@ -586,6 +505,7 @@ local function createLoadingScreen()
             task.wait(0.04)
         end
     end)
+    -- gradiente do título pulsando
     task.spawn(function()
         local deg = 0
         while sg and sg.Parent do
@@ -594,6 +514,7 @@ local function createLoadingScreen()
             task.wait(0.06)
         end
     end)
+    -- shimmer varrendo a barra
     task.spawn(function()
         while sg and sg.Parent do
             shimmer.Position = UDim2.new(-0.25, 0, 0, 0)
@@ -897,7 +818,7 @@ local function doBusDriverKill(tp)
     pcall(function() local re=ReplicatedStorage:FindFirstChild("RE") if re and re:FindFirstChild("1Cair") then re["1Cair"]:FireServer("DeleteAllVehicles") end end)
 end
 
-local function executeFlingBall(tp, power)
+local function executeFlingBallRaw(tp, power)
     if not tp or tp==LocalPlayer then return end applyNetworkBypass()
     local tc=tp.Character local tr=tc and tc:FindFirstChild("HumanoidRootPart")
     local th=tc and tc:FindFirstChildOfClass("Humanoid") if not tr or not th then return end
@@ -905,7 +826,7 @@ local function executeFlingBall(tp, power)
     local mc=LocalPlayer.Character local mh=mc and mc:FindFirstChildOfClass("Humanoid")
     if mh then pcall(function() mh:EquipTool(ball) end) end task.wait(0.2)
     local handle=ball:FindFirstChild("Handle") or ball:FindFirstChildWhichIsA("BasePart") if not handle then return end
-    ball.Parent=workspace handle.CanCollide=false power=tonumber(power) or 9e8
+    ball.Parent=workspace handle.CanCollide=false pcall(function() handle.Massless=true end) power=tonumber(power) or 9e8
     local bv=handle:FindFirstChildOfClass("BodyVelocity") or Instance.new("BodyVelocity")
     bv.Name="FlingVelocity" bv.Velocity=Vector3.new(power,power,power)
     bv.MaxForce=Vector3.new(math.huge,math.huge,math.huge) bv.P=9e9 bv.Parent=handle
@@ -915,6 +836,13 @@ local function executeFlingBall(tp, power)
         task.wait()
     end
     pcall(function() ball:Destroy() end)
+end
+
+local function executeFlingBall(tp, power)
+    local r0 = getHRP()
+    local safeCF = r0 and r0.CFrame
+    executeFlingBallRaw(tp, power)
+    if safeCF then restoreLocalCharacter(safeCF) end
 end
 
 local function executePropMakerKill(tp, selProp)
@@ -1037,7 +965,7 @@ startTextAnimation("BioText","BioSpeed","BioEnabled","RolePlayBio")
 local ExtraHub={
     ToolNames={"Phone","Couch","SoccerBall","FloorCushion","Boombox","Guitar","Skateboard","Umbrella","Camera","Flashlight","Ladder","FireExtinguisher","SprayPaint","Pizza","IceCream"},
     AutoTools=false,AutoToolsTarget=nil,AntiTool=false,AntiToolAll=false,AntiToolTarget=nil,AntiToolRecords={},
-    FlingPower=250000,ESP=false,ESPRGB=false,ESPColor=Color3.fromRGB(170,85,255),ESPFolder=nil,
+    FlingPower=250000,FlingHeight=1500,ESP=false,ESPRGB=false,ESPColor=Color3.fromRGB(170,85,255),ESPFolder=nil,
     HeadSit=false,HeadSitTarget=nil,Spin=false,SpinSpeed=10,Speed=16,JumpPower=50,
     Noclip=false,OriginalCollisions={},InfiniteJump=false,AntiAFK=false,
     Fullbright=false,FullbrightSaved=nil,BigHead=false,OriginalHeadSizes={},RainbowAvatar=false,OriginalColors={},
@@ -1184,26 +1112,216 @@ function ExtraHub.flingCouchAt(tp,pw)
     pcall(function() handle.AssemblyLinearVelocity=Vector3.zero tool.Parent=LocalPlayer:FindFirstChild("Backpack") end)
 end
 
--- METODO DE FLING UNIFICADO (estilo Cartola Hub)
-function ExtraHub.flingByMethod(method, tp, pw)
-    if not tp or tp == LocalPlayer then notify("Fling","Selecione um alvo valido.",3) return end
-    if method == "Fling Ball" then
-        task.spawn(executeFlingBall, tp, pw)
-    elseif method == "Fling Car" then
-        ExtraHub.flingVehicleMethod("Car", tp, pw)
-    elseif method == "Fling Boat" then
-        ExtraHub.flingVehicleMethod("Boat", tp, pw)
-    elseif method == "Fling Couch" then
-        task.spawn(ExtraHub.flingCouchAt, tp, pw)
-    else
-        notify("Fling","Metodo desconhecido: "..tostring(method),3)
-    end
-end
-
 function ExtraHub.vehicleActionAll(action)
     local c=0
     for _,v in ipairs(ExtraHub.getVehicles()) do if ExtraHub.vehicleAction(v,action) then c+=1 end task.wait(0.04) end
     notify("Veiculos",action.." em "..c.." veiculos.",3)
+end
+
+
+-- barco: pede ao servidor ou usa o mais proximo do mapa
+function ExtraHub.getBoat()
+    local re = ReplicatedStorage:FindFirstChild("RE")
+    local remote = re and re:FindFirstChild("1Cair")
+    if remote then
+        for _, nm in ipairs({ "Boat", "SpeedBoat", "Speedboat", "Jetski", "Yacht" }) do
+            pcall(function() remote:FireServer("PickingCar", nm) end)
+            task.wait(0.5)
+            local v = GetBus()
+            if v then return v, true end
+        end
+    end
+    local hrp = getHRP()
+    local near, best = nil, math.huge
+    for _, v in ipairs(ExtraHub.getVehicles()) do
+        local ln = v.Name:lower()
+        local r = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart", true)
+        if r and hrp and (ln:find("boat") or ln:find("ship") or ln:find("barco") or ln:find("jet")) then
+            local d = (r.Position - hrp.Position).Magnitude
+            if d < best then near, best = v, d end
+        end
+    end
+    return near, false
+end
+
+-- FLING CARRO / BARCO: encaixa o alvo no veiculo, sobe ate a altura escolhida acima de onde ele esta, solta e volta em seguranca
+function ExtraHub.flingCarry(kind, tp)
+    if not tp or tp == LocalPlayer then notify("Fling "..kind, "Selecione outro jogador.", 3) return end
+    applyNetworkBypass()
+    local tc = tp.Character
+    local tr = tc and tc:FindFirstChild("HumanoidRootPart")
+    local th = tc and tc:FindFirstChildOfClass("Humanoid")
+    if not tr or not th then return end
+    local mc = LocalPlayer.Character
+    local mr = getHRP()
+    local mh = mc and mc:FindFirstChildOfClass("Humanoid")
+    if not mr or not mh then return end
+    local safeCF = mr.CFrame
+    pcall(function() workspace.FallenPartsDestroyHeight = -math.huge end)
+
+    local veh, ownVeh
+    if kind == "Car" then
+        veh = SpawnBus()
+        ownVeh = veh ~= nil
+    else
+        veh, ownVeh = ExtraHub.getBoat()
+    end
+    if not veh then notify("Fling "..kind, "Nao consegui obter o veiculo.", 4) return end
+    local seat = veh:FindFirstChildWhichIsA("VehicleSeat", true) or veh:FindFirstChildWhichIsA("Seat", true) or veh.PrimaryPart
+    if not seat then notify("Fling "..kind, "Veiculo sem assento.", 4) return end
+
+    notify("Fling "..kind, "Encaixando o alvo...", 3)
+    mr.CFrame = seat.CFrame * CFrame.new(0, 2, 0)
+    task.wait(0.2)
+    pcall(function() if seat:IsA("Seat") or seat:IsA("VehicleSeat") then seat:Sit(mh) end end)
+    task.wait(0.4)
+
+    local angle, started, seated = 0, tick(), false
+    while tick() - started < 4.5 do
+        if not tr.Parent or th.Health <= 0 or not veh.Parent then break end
+        applyNetworkBypass()
+        angle += 45
+        pcall(function()
+            veh:PivotTo(tr.CFrame * CFrame.Angles(0, math.rad(angle), 0))
+            seat.AssemblyLinearVelocity = Vector3.new(0, -10, 0)
+        end)
+        if th.Sit or isTargetSeatedOn(veh, th) then seated = true break end
+        task.wait()
+    end
+
+    if seated then
+        local top = tr.Position + Vector3.new(0, ExtraHub.FlingHeight, 0)
+        local ls = tick()
+        while tick() - ls < 0.9 and veh.Parent do
+            pcall(function()
+                veh:PivotTo(CFrame.new(top))
+                seat.AssemblyLinearVelocity = Vector3.zero
+            end)
+            task.wait()
+        end
+        local v = math.floor(math.clamp(ExtraHub.FlingPower / 200, 300, 4000))
+        local fs = tick()
+        while tick() - fs < 0.6 and veh.Parent do
+            pcall(function()
+                seat.AssemblyLinearVelocity = Vector3.new(math.random(-v, v), v, math.random(-v, v))
+            end)
+            task.wait()
+        end
+        notify("Fling "..kind, "Alvo levado ao alto e solto.", 3)
+    else
+        notify("Fling "..kind, "O alvo nao sentou; cancelado.", 4)
+    end
+
+    pcall(function() mh.Sit = false end)
+    task.wait(0.1)
+    for _ = 1, 5 do restoreLocalCharacter(safeCF) task.wait(0.04) end
+    if ownVeh then
+        pcall(function()
+            local re2 = ReplicatedStorage:FindFirstChild("RE")
+            if re2 and re2:FindFirstChild("1Cair") then re2["1Cair"]:FireServer("DeleteAllVehicles") end
+        end)
+    end
+end
+
+-- FLING COUCH: mesmo encaixe do metodo Couch, mas leva o alvo ao alto em vez do void
+function ExtraHub.flingCouchCarry(tp)
+    if not tp or tp == LocalPlayer then notify("Fling Couch", "Selecione outro jogador.", 3) return end
+    applyNetworkBypass()
+    local tc = tp.Character
+    local tr = tc and tc:FindFirstChild("HumanoidRootPart")
+    local th = tc and tc:FindFirstChildOfClass("Humanoid")
+    if not tr or not th then return end
+    local mc = LocalPlayer.Character
+    local mr = getHRP()
+    local mh = mc and mc:FindFirstChildOfClass("Humanoid")
+    local bp = LocalPlayer:FindFirstChild("Backpack")
+    if not mr or not mh or not bp then return end
+    local safeCF = mr.CFrame
+    local re = ReplicatedStorage:FindFirstChild("RE")
+    local clearTools = re and re:FindFirstChild("1Clea1rTool1s")
+    local toolRemote = re and (re:FindFirstChild("1Too1l") or re:FindFirstChild("1Tool"))
+    pcall(function()
+        workspace.FallenPartsDestroyHeight = -math.huge
+        if clearTools then clearTools:FireServer("ClearAllTools") end
+    end)
+    task.wait(0.2)
+    pcall(function() if toolRemote then toolRemote:InvokeServer("PickingTools", "Couch") end end)
+    task.wait(0.35)
+    local item = bp:FindFirstChild("Couch") or mc:FindFirstChild("Couch") or getCouch()
+    if not item then notify("Fling Couch", "Couch nao encontrado.", 3) return end
+    item.Parent = mc
+    task.wait(0.1)
+    pcall(function() game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.F, false, game) end)
+    task.wait(0.1)
+    mh:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    mh.PlatformStand = false
+    local align = Instance.new("BodyPosition")
+    align.Name = "F1LCouchFling"
+    align.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    align.D = 10
+    align.P = 30000
+    align.Position = mr.Position
+    align.Parent = tr
+
+    notify("Fling Couch", "Encaixando o alvo...", 3)
+    local as, ang, seated = tick(), 0, false
+    while tick() - as < 5 do
+        if not tr.Parent or th.Health <= 0 or not item.Parent then break end
+        applyNetworkBypass()
+        if th.Sit or isTargetSeatedOn(item, th) then seated = true break end
+        local pp = tr.Position + tr.AssemblyLinearVelocity / 1.5
+        ang += 50
+        pcall(function()
+            mr.CFrame = CFrame.new(pp + Vector3.new(0, 2, 0)) * CFrame.Angles(math.rad(ang), 0, 0)
+            align.Position = mr.Position + Vector3.new(2, 0, 0)
+        end)
+        task.wait()
+    end
+    align:Destroy()
+    mh:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+    mh.PlatformStand = false
+
+    if not seated then
+        pcall(function() if clearTools then clearTools:FireServer("ClearAllTools") end end)
+        restoreLocalCharacter(safeCF)
+        notify("Fling Couch", "O alvo nao sentou; cancelado.", 4)
+        return
+    end
+
+    for _, p in ipairs(mc:GetDescendants()) do
+        if p:IsA("BasePart") then
+            p.AssemblyLinearVelocity = Vector3.zero
+            p.AssemblyAngularVelocity = Vector3.zero
+        end
+    end
+    task.wait(0.1)
+
+    -- leva o alvo ao alto, acima de onde ele esta agora
+    local top = tr.Position + Vector3.new(0, ExtraHub.FlingHeight, 0)
+    local ls = tick()
+    while tick() - ls < 0.8 do
+        pcall(function()
+            mr.CFrame = CFrame.new(top)
+            mr.AssemblyLinearVelocity = Vector3.zero
+        end)
+        task.wait()
+    end
+    local v = math.floor(math.clamp(ExtraHub.FlingPower / 200, 300, 4000))
+    local fs = tick()
+    while tick() - fs < 0.6 do
+        pcall(function()
+            mr.AssemblyLinearVelocity = Vector3.new(math.random(-v, v), v, math.random(-v, v))
+        end)
+        task.wait()
+    end
+
+    -- guarda o couch, solta o alvo e volta em seguranca (igual ao metodo Couch)
+    if item.Parent then item.Parent = bp end
+    task.wait(0.01)
+    pcall(function() if toolRemote then toolRemote:InvokeServer("PickingTools", "Couch") end end)
+    task.wait(0.2)
+    for _ = 1, 5 do restoreLocalCharacter(safeCF) task.wait(0.04) end
+    notify("Fling Couch", "Alvo levado ao alto e solto.", 3)
 end
 
 function ExtraHub.clearESP() if ExtraHub.ESPFolder then pcall(function() ExtraHub.ESPFolder:Destroy() end) end ExtraHub.ESPFolder=nil end
@@ -1326,7 +1444,7 @@ function AudioLibrary.delete(n) if not AudioLibrary.Entries[n] then return false
 AudioLibrary.load()
 
 local UIC={Redz=nil,ImageCache={},BgTransp=0.35}
-function UIC.resolveImage(id) local c=tostring(id or ""):match("%d+") if not c then return "" end if UIC.ImageCache[c] then return UIC.ImageCache[c] end local fb="rbxassetid://"..c result=fb pcall(function() local o=game:GetObjects(fb) o=o and o[1] if o then if o:IsA("Decal") or o:IsA("Texture") then if o.Texture~="" then result=o.Texture end elseif o:IsA("ImageLabel") or o:IsA("ImageButton") then if o.Image~="" then result=o.Image end else local d=o:FindFirstChildWhichIsA("Decal",true) or o:FindFirstChildWhichIsA("Texture",true) if d and d.Texture~="" then result=d.Texture end end o:Destroy() end end) UIC.ImageCache[c]=result return result end
+function UIC.resolveImage(id) return resolveImage(id) end
 function UIC.getScreen() local roots={game:GetService("CoreGui"),LocalPlayer:FindFirstChild("PlayerGui")} pcall(function() if gethui then table.insert(roots,1,gethui()) end end) for _,r in ipairs(roots) do if r then local d=r:FindFirstChild("redz Library V5") if d and d:FindFirstChild("Hub") then return d end for _,g in ipairs(r:GetDescendants()) do if g:IsA("ScreenGui") and g:FindFirstChild("Hub") then return g end end end end end
 function UIC.setBackground(id) local scr=UIC.getScreen() local hub=scr and scr:FindFirstChild("Hub") if not hub then notify("Config","Janela Redz nao encontrada.",3) return end local old=hub:FindFirstChild("FantasmaBackground") if old then old:Destroy() end if not id or id=="" then hub.BackgroundTransparency=0.03 return end hub.BackgroundTransparency=1 hub.ClipsDescendants=false local img=Instance.new("ImageLabel") img.Name="FantasmaBackground" img.Size=UDim2.fromScale(1,1) img.Position=UDim2.fromScale(0,0) img.BackgroundTransparency=1 img.Image=UIC.resolveImage(id) img.ImageTransparency=UIC.BgTransp img.ScaleType=Enum.ScaleType.Crop img.ZIndex=0 img.Active=false img.Parent=hub Instance.new("UICorner",img).CornerRadius=UDim.new(0,16) end
 function UIC.setBgTransp(v) UIC.BgTransp=math.clamp(tonumber(v) or 0.35,0,0.95) local scr=UIC.getScreen() local hub=scr and scr:FindFirstChild("Hub") local img=hub and hub:FindFirstChild("FantasmaBackground") if img then img.ImageTransparency=UIC.BgTransp end end
@@ -1399,7 +1517,7 @@ task.spawn(function()
 
     -- 5) CONSTRÓI O PAINEL REDZ
     local wTitle = IS_ADMIN and (HUB_NAME .. " — " .. MY_ROLE) or HUB_NAME
-    local wSub   = IS_ADMIN and ("Brookhaven v9.0  |  " .. MY_ROLE) or "Brookhaven Edition v9.0"
+    local wSub   = IS_ADMIN and ("Brookhaven v9.1  |  " .. MY_ROLE) or "Brookhaven Edition v9.1"
 
     local Window = redz:MakeWindow({
         Title      = wTitle,
@@ -1434,7 +1552,7 @@ task.spawn(function()
 
     -- HOME
     T.Home:AddSection({ IS_ADMIN and "Painel Admin Detectado" or "Bem-vindo" })
-    T.Home:AddParagraph({ HUB_NAME, "Brookhaven Edition v9.0  |  " .. (IS_ADMIN and MY_ROLE or "Utilizador Comum") })
+    T.Home:AddParagraph({ HUB_NAME, "Brookhaven Edition v9.1  |  " .. (IS_ADMIN and MY_ROLE or "Utilizador Comum") })
     T.Home:AddSection({ "Comunidade" })
     T.Home:AddDiscordInvite({ Name=HUB_NAME, Description="Servidor oficial da comunidade Fantasma1l Hub", Logo=ICON_ID, Invite=DISCORD_URL })
     T.Home:AddButton({ "Copiar Link do Discord", function()
@@ -1571,20 +1689,15 @@ task.spawn(function()
         executeKillPropAll()
     end })
 
-    -- ════════ FLING POR METODO (estilo Cartola Hub) ════════
-    T.Troll:AddSection({ "Fling por Metodo" })
-    local flingMethod = "Fling Ball"
-    T.Troll:AddDropdown({ Name="Metodo de Fling", Options={"Fling Ball","Fling Car","Fling Boat","Fling Couch"}, Default="Fling Ball",
-        Callback=function(v) flingMethod=v end })
+    T.Troll:AddSection({ "Fling por Forca" })
     T.Troll:AddSlider({ Name="Forca do Fling", Min=50000, Max=1000000, Default=250000,
         Callback=function(v) ExtraHub.FlingPower=math.floor(tonumber(v) or 250000) end })
-    T.Troll:AddButton({ "EXECUTAR FLING  —  Metodo Selecionado", function()
-        local t=findPlayer(getgenv().Target or selName)
-        if not t or t==LocalPlayer then notify("Fling","Selecione um alvo.",3) return end
-        notify("Fling",flingMethod.." em "..t.Name.." (forca "..ExtraHub.FlingPower..")")
-        ExtraHub.flingByMethod(flingMethod, t, ExtraHub.FlingPower)
-    end })
-
+    T.Troll:AddSlider({ Name="Altura do Fling", Min=300, Max=6000, Default=1500,
+        Callback=function(v) ExtraHub.FlingHeight=math.floor(tonumber(v) or 1500) end })
+    T.Troll:AddButton({ "Fling Car", function() local t=findPlayer(getgenv().Target or selName) if t then task.spawn(ExtraHub.flingCarry,"Car",t) end end })
+    T.Troll:AddButton({ "Fling Ball", function() local t=findPlayer(getgenv().Target or selName) if t then task.spawn(executeFlingBall,t,ExtraHub.FlingPower) end end })
+    T.Troll:AddButton({ "Fling Boat", function() local t=findPlayer(getgenv().Target or selName) if t then task.spawn(ExtraHub.flingCarry,"Boat",t) end end })
+    T.Troll:AddButton({ "Fling Couch", function() local t=findPlayer(getgenv().Target or selName) if t then task.spawn(ExtraHub.flingCouchCarry,t) end end })
     T.Troll:AddSection({ "Anti Tool" })
     T.Troll:AddToggle({ Name="Anti Tool — Alvo Selecionado", Default=false, Callback=function(v) ExtraHub.setAntiTool(v,getgenv().Target or selName) end })
     T.Troll:AddToggle({ Name="Anti Tool All", Default=false, Callback=function(v) ExtraHub.setAntiToolAll(v) end })
@@ -1676,6 +1789,7 @@ task.spawn(function()
         local tr=tp and tp.Character and tp.Character:FindFirstChild("HumanoidRootPart")
         local mr=getHRP() if tr and mr then mr.CFrame=tr.CFrame*CFrame.new(0,2,-4) end
     end })
+    T.Fun:AddButton({ "Fling Ball no Alvo", function() local tp=Players:FindFirstChild(getgenv().Target or selName or "") if tp then task.spawn(executeFlingBall,tp) end end })
     T.Fun:AddButton({ "Sentar / Levantar", function() local ch=LocalPlayer.Character local hum=ch and ch:FindFirstChildOfClass("Humanoid") if hum then hum.Sit=not hum.Sit if not hum.Sit then hum:ChangeState(Enum.HumanoidStateType.GettingUp) end end end })
     T.Fun:AddButton({ "Voltar ao Spawn", function()
         local root=getHRP() if not root then return end
@@ -1768,5 +1882,5 @@ task.spawn(function()
     T.Config:AddButton({ "Remover Fundo",    function() UIC.setBackground("") end })
     T.Config:AddButton({ "Icone no Titulo",  function() UIC.setTitleIcon("81149055236435") end })
 
-    notify(HUB_NAME, IS_ADMIN and ("Painel BH carregado — " .. MY_ROLE) or "Brookhaven Edition v9.0 carregado!", 4)
+    notify(HUB_NAME, IS_ADMIN and ("Painel BH carregado — " .. MY_ROLE) or "Brookhaven Edition v9.1 carregado!", 4)
 end) -- fim Redz task.spawn
