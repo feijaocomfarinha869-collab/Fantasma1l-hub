@@ -15,7 +15,7 @@ local ICON_ID     = "rbxassetid://72455921762458"
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1561501648298188801/1seLFNFBSSjoOt9qZc2vs_gfirlf6pkvUjDkzsFYW7ozCVUGloPd9Jq1mXcUqDkajWbY"
 local DISCORD_URL = "https://discord.gg/bXuvVw76B"
 local BG_NUM      = "123768547601841"
-local BG_ID       = "rbxassetid://"123768547601841"
+local BG_ID       = "rbxassetid://"..BG_NUM
 
 local function findPlayer(name)
     return Players:FindFirstChild(tostring(name or ""))
