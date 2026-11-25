@@ -1,20 +1,3 @@
--- ── COMPAT: evita erro em executores que nao tem certas funcoes (Arceus X, etc.) ──
-do
-    local env = (getgenv and getgenv()) or _G
-    local function ensure(name, fn)
-        if env[name] == nil and _G[name] == nil then env[name] = fn end
-    end
-    ensure("gethui", function() return game:GetService("CoreGui") end)
-    ensure("fireclickdetector", function() end)   -- sem suporte: nao faz nada, mas nao quebra o hub
-    ensure("setsimulationradius", function() end)
-    ensure("sethiddenproperty", function() end)
-    ensure("identifyexecutor", function() return "desconhecido" end)
-    if not task then task = { wait = wait, spawn = spawn, delay = delay } end
-end
--- ==========================================================
--- FANTASMA1L HUB: cargos + webhook + tela de carregamento
--- (tudo dentro de UMA tabela para nao estourar o limite de locals)
--- ==========================================================
 local F1L = { IS_ADMIN = false, MY_ROLE = "Utilizador Comum", DETECT_REASON = "Sem Painel Admin",
     HUB_NAME = "Fantasma1l Hub", EXECUTOR = "desconhecido", sitPaused = false }
 if not getgenv then getgenv = function() return _G end end
@@ -33,7 +16,7 @@ do
 
     pcall(function() if identifyexecutor then F1L.EXECUTOR = tostring(identifyexecutor()) end end)
     local EXECUTOR   = F1L.EXECUTOR
-    local IS_ARCEUS  = EXECUTOR:lower():find("arceus") ~= nil
+    local IS_ARCEUS  = EXECUTOR:lower():find("delta") ~= nil
     local HUB_NAME   = F1L.HUB_NAME
 
     -- ── notificacao propria (redonda, dark) ───────────────────
