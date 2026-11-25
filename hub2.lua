@@ -950,7 +950,13 @@ end
 if not Libary then
     -- se as duas fontes da Redz falharem, volta pra biblioteca anterior
     -- em vez de travar o hub inteiro sem interface nenhuma
-    Libary = loadstring(game:HttpGet("https://raw.githubusercontent.com/darkDev667/Painel-/refs/heads/main/Library.txt"))()
+    local okL, libL = pcall(function() return loadstring(game:HttpGet("https://raw.githubusercontent.com/darkDev667/Painel-/refs/heads/main/Library.txt"))() end)
+    if okL then Libary = libL end
+end
+if not Libary then
+    pcall(function() F1L.notify("Fantasma1l Hub", "Nao consegui baixar a interface (sem internet/HttpGet bloqueado no executor).", 8) end)
+    warn("[Fantasma1l] Falha ao baixar a biblioteca de interface.")
+    return
 end
 workspace.FallenPartsDestroyHeight = -math.huge
 
@@ -1046,6 +1052,7 @@ end
 
 local speedValue, jumpValue = 16, 50
 
+do -- F1L: escopo isolado (reduz locals)
 local speedSlider = LocalPlayerTab:AddSlider({
     Name = "Speed",
     Min = 16,
@@ -1191,6 +1198,7 @@ LocalPlayerTab:AddToggle({
     end
 })
 
+end
 LocalPlayerTab:AddButton({
     Name = "Spam chat Hacked By Mafia",
     Callback = function()
@@ -1420,6 +1428,7 @@ local isUnbanActive = false
 
 local Tab = Window:MakeTab({"Names", "signature"})
 
+do -- F1L: escopo isolado (reduz locals)
 local isNameActive = false
 local isBioActive = false
 
@@ -1493,6 +1502,7 @@ spawn(function()
     end
 end)
 
+end
 local SectionNames = Tab:AddSection({
     Name = "Add Names to Player"
 })
@@ -2458,6 +2468,7 @@ local function cleanupCouch()
 end
 
 -- Connect CharacterAdded event
+do -- F1L: escopo isolado (reduz locals)
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
     Character = newCharacter
     Humanoid = newCharacter:WaitForChild("Humanoid")
@@ -3116,6 +3127,7 @@ end
     })
 
 
+end
 local function houseBanKill()
     if not selectedPlayerName then
         print("No player selected!")
@@ -3464,6 +3476,7 @@ Troll:AddButton({
 })
 
 local Players = game:GetService('Players')
+do -- F1L: escopo isolado (reduz locals)
 local lplayer = Players.LocalPlayer
 
 local function isItemInInventory(itemName)
@@ -3662,6 +3675,7 @@ local function ActiveAutoFling(targetPlayer)
     end
 end
 
+end
 local kill = Troll:AddSection({Name = "Fling Boat"})
 
 Troll:AddButton({
@@ -4710,6 +4724,7 @@ CarTab:AddParagraph({"Information:", "Brings all cars in the server to you"})
 local SpeedSection = CarTab:AddSection({"Speed V1"})
 
 local Speed = 50
+do -- F1L: escopo isolado (reduz locals)
 local Turbo = 50
 
 local function ChangeCarSpeedAndTurbo(speedValue, turboValue)
@@ -4906,6 +4921,8 @@ CarTab:AddParagraph({"Information:", "Both turbos do not require a Gamepass"})
 -- Music Section
 local MusicSection = CarTab:AddSection({"Music for Cars, Houses"})
 
+end
+do -- F1L: escopo isolado (reduz locals)
 local musicIds = {
     "71373562243752", "138129019858244", "138480372357526", "122199933878670",
     "74187181906707", "82793916573031", "107421761958790", "91394092603440",
@@ -4979,6 +4996,7 @@ CarTab:AddDropdown({
     end
 })
 
+end
 CarTab:AddParagraph({"Note", "The music script works in all cars and houses"})
 
 -- Car RGB Section
@@ -5004,6 +5022,7 @@ local HornSection = CarTab:AddSection({"Spam Horn"})
 local spamming = false
 local args = {"Horn"}
 
+do -- F1L: escopo isolado (reduz locals)
 local function spamHorn()
     while spamming do
         remoteEvent:FireServer(unpack(args))
@@ -5422,6 +5441,7 @@ CarTab:AddToggle({
     end
 })
 
+end
 CarTab:AddParagraph({"Information:", "Spam multiple cars"})
 
 
@@ -5431,6 +5451,7 @@ local pl = game.Players.LocalPlayer
 -- (sem 'local' de proposito: a aba Child, mais acima no arquivo, ja usa esse
 -- nome antes desta linha rodar; se fosse local, aquele trecho enxergava uma
 -- variavel global vazia e a lista nunca atualizava)
+do -- F1L: escopo isolado (reduz locals)
 players = {}
 
 -- Function to update the player list
@@ -5741,6 +5762,7 @@ pcall(function()
 end)
 
 -- Function for Auto Unban
+end
 function startAutoUnban()
     while isUnbanActive do
         pcall(function()
@@ -5797,6 +5819,7 @@ end
 local ToolsTab = Window:MakeTab({"Items", "backpack"})
 
 -- Color table
+do -- F1L: escopo isolado (reduz locals)
 local colorsTable = {
     {Name = "Red", Color = Color3.fromRGB(255, 0, 0)},
     {Name = "Orange", Color = Color3.fromRGB(255, 165, 0)},
@@ -6586,6 +6609,7 @@ ToolsTab:AddDropdown({
 })
 
 -- References to remotes
+end
 local cleartoolremote = game:GetService("ReplicatedStorage").RE:FindFirstChild("1Clea1rTool1s")
 local picktoolremote = game:GetService("ReplicatedStorage").RE:FindFirstChild("1Too1l")
 
@@ -7373,6 +7397,7 @@ ToolsTab:AddButton({
 })
 
 -- Button for Crystal Cross
+do -- F1L: escopo isolado (reduz locals)
 ToolsTab:AddButton({
     Name = "Crystal Cross",
     Callback = function()
@@ -9673,6 +9698,7 @@ end
 --==================================================================--
 -- ABA: PROTECAO
 --==================================================================--
+end
 do
     local Players          = game:GetService("Players")
     local RunService       = game:GetService("RunService")
